@@ -60,51 +60,61 @@ async function main() {
   ditto.startSync()
   
   rawSubscription = ditto.store.collection(RAW_COLLECTION_NAME).find("synced == false").subscribe()
+  let rawDocuments: Document[] =[]
+
   rawLiveQuery = ditto.store
     .collection(RAW_COLLECTION_NAME)
     .find("synced == false")
-    .observeLocal((docs, event) => {
-      rawDocuments = docs
-      let rawDoc
-      rawDocuments.map((rawDoc) => {
+    .observeLocalWithNextSignal(async (docs, event, signalNext) => {
+      for (let i = 0; i < docs.length; i++) {
+        const rawDoc = docs[i]
+	console.log("RAW DOC: ", rawDoc.value)
         // Send to RedPanda topic
-        producer.send({
+	console.log("Sending to RedPanda!")
+        await producer.send({
           topic: RAW_TOPIC_NAME,
           messages: [
-            { payload: rawDoc.value }
+            { value: JSON.stringify(rawDoc.value) }
           ],
         })
-        rawDoc.value.synced = true
+        await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
+          mutableDoc.at('synced').set(true)
+        }) 
         // Set synced, and evict
-        ditto.store.collection(RAW_COLLECTION_NAME).upsert(rawDoc)
-        ditto.store.collection(RAW_COLLECTION_NAME).evict(rawDoc)
-      })
+      }
+      await ditto.store.collection(RAW_COLLECTION_NAME).find("synced == true").evict()
+      signalNext()
     })
 
   productSubscription = ditto.store.collection(PRODUCT_COLLECTION_NAME).find("synced == false").subscribe()
   productLiveQuery = ditto.store
     .collection(PRODUCT_COLLECTION_NAME)
     .find("synced == false")
-    .observeLocal((docs, event) => {
-      productDocuments = docs
-      let productDoc
-      productDocuments.map((rawDoc) => {
+    .observeLocalWithNextSignal(async (docs, event, signalNext) => {
+      for (let i = 0; i < docs.length; i++) {
+        const productDoc = docs[i]
+        console.log("PRODUCT DOC to RedPanda: ", productDoc)
         producer.send({
           topic: PRODUCT_TOPIC_NAME,
           messages: [
-            { payload: productDoc.value }
+            { value: JSON.stringify(productDoc.value) }
           ],
         })
-        productDoc.value.synced = true
+        await ditto.store.collection(PRODUCT_COLLECTION_NAME).findByID(productDoc.id).update((mutableDoc) => {
+          mutableDoc.at('synced').set(true)
+        }) 
         // Set synced, and evict
-        ditto.store.collection(PRODUCT_COLLECTION_NAME).upsert(productDoc)
-        ditto.store.collection(PRODUCT_COLLECTION_NAME).evict(productDoc)
-      })
+      }
+      ditto.store.collection(PRODUCT_COLLECTION_NAME).find("synced == true").evict()
+      signalNext()
     })
 
   const presenceObserver = ditto.presence.observe((graph) => {
-    console.log("local peer connections: ", graph.localPeer.connections)
     if (graph.localPeer.connections.length != 0) {
+      graph.localPeer.connections.forEach((connection) => {
+
+        console.log("local peer connection: ", connection.id)
+      })
     }
   })
 
