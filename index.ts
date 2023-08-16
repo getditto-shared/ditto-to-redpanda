@@ -1,4 +1,4 @@
-import { init, Ditto } from '@dittolive/ditto'
+import { init, Ditto, TransportConfig } from '@dittolive/ditto'
 require('dotenv').config()
 
 let ditto
@@ -23,12 +23,31 @@ const kafka = new Kafka({
 
 async function main() {
   await init()
+
+  const config = new TransportConfig()
+  config.peerToPeer.bluetoothLE.isEnabled = true
+  config.peerToPeer.lan.isEnabled = false
+  config.peerToPeer.awdl.isEnabled = false
+
   ditto = new Ditto({ type: 'onlinePlayground',
 	  appID: APP_ID,
 	  token: APP_TOKEN
   })
 
+  const transportConditionsObserver = ditto.observeTransportConditions((condition, source) => {
+     if (condition === 'BLEDisabled') {
+       console.log('BLE disabled')
+     } else if (condition === 'NoBLECentralPermission') {
+       console.log('Permission missing for BLE')
+     } else if (condition === 'NoBLEPeripheralPermission') {
+       console.log('Permissions missing for BLE')
+     }
+   })
+
+	ditto.setTransportConfig(config)
+
   ditto.startSync()
+  
   subscription = ditto.store.collection(COLLECTION_NAME).find("isDeleted == false").subscribe()
 
   const presenceObserver = ditto.presence.observe((graph) => {
