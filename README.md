@@ -1,5 +1,7 @@
-# example service for taking collection changes and producing messages on a RedPanda topic
+# Ditto - RedPanda Bridge
+Example service for taking collection changes and producing messages on a RedPanda topic
 
+## Setup
 Need an `.env` with this things populated:
 
 ```
