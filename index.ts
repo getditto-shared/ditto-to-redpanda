@@ -19,14 +19,14 @@ let RAW_COLLECTION_NAME = process.env.RAW_COLLECTION_NAME
 let PRODUCT_COLLECTION_NAME = process.env.PRODUCT_COLLECTION_NAME
 let RAW_TOPIC_NAME = process.env.RAW_TOPIC_NAME
 let PRODUCT_TOPIC_NAME = process.env.PRODUCT_TOPIC_NAME
+let BROKER_HOST = process.env.BROKER_HOST
+let BROKER_PORT = process.env.BROKER_PORT
 
 const { Kafka, CompressionTypes, logLevel } = require('kafkajs')
-const ip = require('ip')
-const host = process.env.HOST_IP || ip.address()
 
 const kafka = new Kafka({
-  logLevel: logLevel.DEBUG,
-  brokers: [`${host}:9092`],
+  logLevel: logLevel.INFO,
+  brokers: [`${BROKER_HOST}:${BROKER_PORT}`],
   clientId: 'ditto-producer',
 })
 
@@ -58,6 +58,7 @@ async function main() {
   const producer = kafka.producer()
   await producer.connect()
   ditto.startSync()
+ // AND all data < current timestamp
   
   rawSubscription = ditto.store.collection(RAW_COLLECTION_NAME).find("synced == false").subscribe()
   let rawDocuments: Document[] =[]
@@ -68,9 +69,9 @@ async function main() {
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
-	console.log("RAW DOC: ", rawDoc.value)
+	console.log("NEW RAW DOC")
         // Send to RedPanda topic
-	console.log("Sending to RedPanda!")
+	//console.log("Sending to RedPanda!")
         await producer.send({
           topic: RAW_TOPIC_NAME,
           messages: [
@@ -82,7 +83,8 @@ async function main() {
         }) 
         // Set synced, and evict
       }
-      await ditto.store.collection(RAW_COLLECTION_NAME).find("synced == true").evict()
+    //  await ditto.store.collection(RAW_COLLECTION_NAME).find("synced == true").evict()
+    //  console.log("XXX EVICTED!!!")
       signalNext()
     })
 
@@ -111,8 +113,8 @@ async function main() {
 
   const presenceObserver = ditto.presence.observe((graph) => {
     if (graph.localPeer.connections.length != 0) {
+  //    console.log("peers: ", graph.localPeer.connections)
       graph.localPeer.connections.forEach((connection) => {
-
         console.log("local peer connection: ", connection.id)
       })
     }
