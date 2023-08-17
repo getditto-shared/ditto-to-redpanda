@@ -40,7 +40,8 @@ async function main() {
 
   ditto = new Ditto({ type: 'onlinePlayground',
 	  appID: APP_ID,
-	  token: APP_TOKEN
+	  token: APP_TOKEN,
+    enableDittoCloudSync: false,
   })
 
   const transportConditionsObserver = ditto.observeTransportConditions((condition, source) => {
@@ -69,15 +70,17 @@ async function main() {
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
-	console.log("NEW RAW DOC")
+//	console.log("NEW RAW DOC")
         // Send to RedPanda topic
-	//console.log("Sending to RedPanda!")
-        await producer.send({
-          topic: RAW_TOPIC_NAME,
-          messages: [
-            { value: JSON.stringify(rawDoc.value) }
-          ],
-        })
+      if (i % 100 == 0) {
+          console.log("Sending to RedPanda - num of docs: ", docs.length)
+      }
+       await producer.send({
+         topic: RAW_TOPIC_NAME,
+         messages: [
+          { value: JSON.stringify(rawDoc.value) }
+         ],
+       })
         await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
           mutableDoc.at('synced').set(true)
         }) 
@@ -112,10 +115,9 @@ async function main() {
     })
 
   const presenceObserver = ditto.presence.observe((graph) => {
-    if (graph.localPeer.connections.length != 0) {
-  //    console.log("peers: ", graph.localPeer.connections)
-      graph.localPeer.connections.forEach((connection) => {
-        console.log("local peer connection: ", connection.id)
+    if (graph.remotePeers.length != 0) {
+      graph.remotePeers.forEach((peer) => {
+        console.log("peer connection: ", peer.deviceName, peer.connections[0].connectionType)
       })
     }
   })
