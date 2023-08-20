@@ -18,13 +18,18 @@ let APP_ID = process.env.APP_ID
 //let SHARED_KEY = process.env.SHARED_KEY
 let APP_TOKEN = process.env.APP_TOKEN
 let RAW_COLLECTION_NAME = process.env.RAW_COLLECTION_NAME
-let PRODUCT_COLLECTION_NAME = process.env.PRODUCT_COLLECTION_NAME
 let RAW_TOPIC_NAME = process.env.RAW_TOPIC_NAME
+let RAW_QUERY_KEY = process.env.RAW_QUERY_KEY
+let RAW_QUERY_VALUE = process.env.RAW_QUERY_VALUE
+let PRODUCT_COLLECTION_NAME = process.env.PRODUCT_COLLECTION_NAME
 let PRODUCT_TOPIC_NAME = process.env.PRODUCT_TOPIC_NAME
+let PRODUCT_QUERY_KEY = process.env.PRODUCT_QUERY_KEY
+let PRODUCT_QUERY_VALUE = process.env.PRODUCT_QUERY_VALUE
 let BROKER_HOST = process.env.BROKER_HOST
 let BROKER_PORT = process.env.BROKER_PORT
 let USE_BLUETOOTH = (process.env.USE_BLUETOOTH === "True")
 let USE_LAN = (process.env.USE_LAN === "True")
+let USE_CLOUD = (process.env.USE_CLOUD == "True")
 
 const { Kafka, CompressionTypes, logLevel } = require('kafkajs')
 
@@ -45,7 +50,7 @@ async function main() {
   ditto = new Ditto({ type: 'onlinePlayground',
 	  appID: APP_ID,
 	  token: APP_TOKEN,
-    enableDittoCloudSync: false,
+    enableDittoCloudSync: USE_CLOUD,
   })
 
   const transportConditionsObserver = ditto.observeTransportConditions((condition, source) => {
@@ -65,12 +70,12 @@ async function main() {
   ditto.startSync()
  // AND all data < current timestamp
   
-  rawSubscription = ditto.store.collection(RAW_COLLECTION_NAME).find("synced == false").subscribe()
+  rawSubscription = ditto.store.collection(RAW_COLLECTION_NAME).find(`${RAW_QUERY_KEY} == ${RAW_QUERY_VALUE}`).subscribe()
   let rawDocuments: Document[] =[]
 
   rawLiveQuery = ditto.store
     .collection(RAW_COLLECTION_NAME)
-    .find("synced == false")
+    .find(`${RAW_QUERY_KEY} == ${RAW_QUERY_VALUE}`)
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
@@ -84,19 +89,20 @@ async function main() {
          compression: CompressionTypes.GZIP,
        })
         await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
-          mutableDoc.at('synced').set(true)
+          mutableDoc.at(`${RAW_QUERY_KEY}`).set(true)
         }) 
         // Set synced, and evict
       }
+    // Not evicting here, as we're still going to sync the 
     //  await ditto.store.collection(RAW_COLLECTION_NAME).find("synced == true").evict()
     //  console.log("XXX EVICTED!!!")
       signalNext()
     })
 
-  productSubscription = ditto.store.collection(PRODUCT_COLLECTION_NAME).find("synced == false").subscribe()
+  productSubscription = ditto.store.collection(PRODUCT_COLLECTION_NAME).find(`${PRODUCT_QUERY_KEY} == ${PRODUCT_QUERY_VALUE}`).subscribe()
   productLiveQuery = ditto.store
     .collection(PRODUCT_COLLECTION_NAME)
-    .find("synced == false")
+    .find(`${PRODUCT_QUERY_KEY} == ${PRODUCT_QUERY_VALUE}`)
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
       for (let i = 0; i < docs.length; i++) {
         const productDoc = docs[i]
@@ -108,11 +114,11 @@ async function main() {
           ],
         })
         await ditto.store.collection(PRODUCT_COLLECTION_NAME).findByID(productDoc.id).update((mutableDoc) => {
-          mutableDoc.at('synced').set(true)
+          mutableDoc.at(`${PRODUCT_QUERY_KEY}`).set(true)
         }) 
         // Set synced, and evict
       }
-      ditto.store.collection(PRODUCT_COLLECTION_NAME).find("synced == true").evict()
+      //ditto.store.collection(PRODUCT_COLLECTION_NAME).find("synced == true").evict()
       signalNext()
     })
 
