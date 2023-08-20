@@ -1,5 +1,7 @@
-import { init, Ditto, Document, TransportConfig } from '@dittolive/ditto'
+import { init, Ditto, Document, Logger, TransportConfig } from '@dittolive/ditto'
 require('dotenv').config()
+
+Logger.minimumLogLevel = 'Info'
 
 let ditto
 
@@ -34,7 +36,7 @@ const kafka = new Kafka({
 
 async function main() {
   await init()
-
+  Logger.info(`Starting up - broker: ${BROKER_HOST}:${BROKER_PORT}, BLE: ${USE_BLUETOOTH}, LAN: ${USE_LAN}`)
   const config = new TransportConfig()
   config.peerToPeer.bluetoothLE.isEnabled = USE_BLUETOOTH
   config.peerToPeer.lan.isEnabled = USE_LAN
