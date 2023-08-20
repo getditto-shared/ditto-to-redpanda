@@ -21,6 +21,8 @@ let RAW_TOPIC_NAME = process.env.RAW_TOPIC_NAME
 let PRODUCT_TOPIC_NAME = process.env.PRODUCT_TOPIC_NAME
 let BROKER_HOST = process.env.BROKER_HOST
 let BROKER_PORT = process.env.BROKER_PORT
+let USE_BLUETOOTH = process.env.USE_BLUETOOTH
+let USE_LAN = process.env.USE_LAN
 
 const { Kafka, CompressionTypes, logLevel } = require('kafkajs')
 
@@ -34,8 +36,8 @@ async function main() {
   await init()
 
   const config = new TransportConfig()
-  config.peerToPeer.bluetoothLE.isEnabled = true
-  config.peerToPeer.lan.isEnabled = false
+  config.peerToPeer.bluetoothLE.isEnabled = USE_BLUETOOTH
+  config.peerToPeer.lan.isEnabled = USE_LAN
   config.peerToPeer.awdl.isEnabled = false
 
   ditto = new Ditto({ type: 'onlinePlayground',
