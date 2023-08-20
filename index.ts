@@ -21,8 +21,8 @@ let RAW_TOPIC_NAME = process.env.RAW_TOPIC_NAME
 let PRODUCT_TOPIC_NAME = process.env.PRODUCT_TOPIC_NAME
 let BROKER_HOST = process.env.BROKER_HOST
 let BROKER_PORT = process.env.BROKER_PORT
-let USE_BLUETOOTH = process.env.USE_BLUETOOTH
-let USE_LAN = process.env.USE_LAN
+let USE_BLUETOOTH = (process.env.USE_BLUETOOTH === "true")
+let USE_LAN = (process.env.USE_LAN === "true")
 
 const { Kafka, CompressionTypes, logLevel } = require('kafkajs')
 
