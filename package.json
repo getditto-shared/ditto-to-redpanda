@@ -2,6 +2,7 @@
   "dependencies": {
     "@dittolive/ditto": "^4.3.1",
     "@types/node": "^20.5.0",
+    "daemonize2": "^0.4.2",
     "dotenv": "^16.3.1",
     "ip": "^1.1.8",
     "kafkajs": "^2.2.4"
