@@ -80,7 +80,6 @@ async function main() {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
         // Send to RedPanda topic
-       Logger.info(`Sending to RedPanda - num of docs: ${docs.length}`)
        await producer.send({
          topic: RAW_TOPIC_NAME,
          messages: [
@@ -88,9 +87,13 @@ async function main() {
          ],
          compression: CompressionTypes.GZIP,
        })
-        await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
-          mutableDoc.at(`${RAW_QUERY_KEY}`).set(true)
-        }) 
+        if (RAW_QUERY_VALUE) {
+          Logger.info(`Sent to RedPanda - ${docs.length} docs`)
+        } else {
+          await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
+            mutableDoc.at(`${RAW_QUERY_KEY}`).set(true)
+          }) 
+        }
         // Set synced, and evict
       }
     // Not evicting here, as we're still going to sync the 
