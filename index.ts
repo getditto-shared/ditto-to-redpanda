@@ -80,7 +80,7 @@ async function main() {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
         // Send to RedPanda topic
-       Logger.info("Sending to RedPanda - num of docs: ", docs.length)
+       Logger.info(`Sending to RedPanda - num of docs: ${docs.length}`)
        await producer.send({
          topic: RAW_TOPIC_NAME,
          messages: [
@@ -106,7 +106,6 @@ async function main() {
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
       for (let i = 0; i < docs.length; i++) {
         const productDoc = docs[i]
-        Logger.info("PRODUCT DOC to RedPanda: ", productDoc)
         producer.send({
           topic: PRODUCT_TOPIC_NAME,
           messages: [
@@ -125,7 +124,7 @@ async function main() {
   const presenceObserver = ditto.presence.observe((graph) => {
     if (graph.remotePeers.length != 0) {
       graph.remotePeers.forEach((peer) => {
-        Logger.info("peer connection: ", peer.deviceName, peer.connections[0].connectionType)
+        Logger.info(`peer connection: ${peer.deviceName}, ${peer.connections[0].connectionType}`)
       })
     }
   })
