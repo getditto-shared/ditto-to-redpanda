@@ -77,6 +77,7 @@ async function main() {
     .collection(RAW_COLLECTION_NAME)
     .find(`${RAW_QUERY_KEY} == ${RAW_QUERY_VALUE}`)
     .observeLocalWithNextSignal(async (docs, event, signalNext) => {
+      Logger.info(`Sending to RedPanda - ${docs.length} docs`)
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
         // Send to RedPanda topic
@@ -87,8 +88,7 @@ async function main() {
           ],
           compression: CompressionTypes.GZIP,
         })
-        Logger.info(`Sent to RedPanda - ${docs.length} docs`)
-        if (!RAW_QUERY_VALUE) {
+        if (RAW_QUERY_VALUE == "false") {
           await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
             mutableDoc.at(`${RAW_QUERY_KEY}`).set(true)
           }) 
