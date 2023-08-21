@@ -80,21 +80,19 @@ async function main() {
       for (let i = 0; i < docs.length; i++) {
         const rawDoc = docs[i]
         // Send to RedPanda topic
-       await producer.send({
-         topic: RAW_TOPIC_NAME,
-         messages: [
-          { key: rawDoc.value.quartetId + "." + rawDoc.value.nodeId, value: JSON.stringify(rawDoc.value) }
-         ],
-         compression: CompressionTypes.GZIP,
-       })
-        if (RAW_QUERY_VALUE) {
-          Logger.info(`Sent to RedPanda - ${docs.length} docs`)
-        } else {
+        await producer.send({
+          topic: RAW_TOPIC_NAME,
+          messages: [
+            { key: rawDoc.value.quartetId + "." + rawDoc.value.nodeId, value: JSON.stringify(rawDoc.value) }
+          ],
+          compression: CompressionTypes.GZIP,
+        })
+        Logger.info(`Sent to RedPanda - ${docs.length} docs`)
+        if (!RAW_QUERY_VALUE) {
           await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
             mutableDoc.at(`${RAW_QUERY_KEY}`).set(true)
           }) 
-        }
-        // Set synced, and evict
+        } 
       }
     // Not evicting here, as we're still going to sync the 
     //  await ditto.store.collection(RAW_COLLECTION_NAME).find("synced == true").evict()
