@@ -111,7 +111,9 @@ async function main() {
         }) 
         // Set synced, and evict
       }
-      ditto.store.collection(PRODUCT_COLLECTION_NAME).find("state == 'delivered'").evict()
+      // The eviction process is causing sync looping issues.  Need to determine optimal configuration
+      // Working with Ditto engineering to resolve - Kit
+      // ditto.store.collection(PRODUCT_COLLECTION_NAME).find("state == 'delivered'").evict()
       signalNext()
     })
 
