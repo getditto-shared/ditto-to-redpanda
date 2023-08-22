@@ -1,4 +1,6 @@
 .env
 index.js
+base.js
+collector.js
 node_modules/
 ditto/

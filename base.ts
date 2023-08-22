@@ -84,11 +84,9 @@ async function main() {
           ],
           compression: CompressionTypes.GZIP,
         })
-        if (RAW_QUERY_VALUE == "false") {
-          await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
-            mutableDoc.at("state").set("delivered")
-          }) 
-        } 
+        await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
+          mutableDoc.at("state").set("delivered")
+        }) 
       }
       await ditto.store.collection(RAW_COLLECTION_NAME).find("state == 'delivered'").evict()
       console.log("XXX EVICTED!!!")

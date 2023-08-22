@@ -84,11 +84,9 @@ async function main() {
           ],
           compression: CompressionTypes.GZIP,
         })
-        if (RAW_QUERY_VALUE == "false") {
-          await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
-            mutableDoc.at("state").set("collected")
-          }) 
-        } 
+        await ditto.store.collection(RAW_COLLECTION_NAME).findByID(rawDoc.id).update((mutableDoc) => {
+          mutableDoc.at("state").set("collected")
+        }) 
       }
       // Not evicting here, as we're still going to sync to the base node 
       signalNext()
