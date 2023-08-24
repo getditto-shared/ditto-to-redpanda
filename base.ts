@@ -7,11 +7,11 @@ let ditto
 
 let rawSubscription
 let rawLiveQuery
-let rawDocuments: Document[] = []
 
 let productSubscription
 let productLiveQuery
-let productDocuments: Document[] = []
+
+let presence
 
 let APP_ID = process.env.APP_ID
 //let OFFLINE_TOKEN = process.env.OFFLINE_TOKEN
@@ -67,7 +67,6 @@ async function main() {
  // AND all data < current timestamp
   
   rawSubscription = ditto.store.collection(RAW_COLLECTION_NAME).find("state == 'collected'").subscribe()
-  let rawDocuments: Document[] =[]
 
   rawLiveQuery = ditto.store
     .collection(RAW_COLLECTION_NAME)
@@ -117,7 +116,7 @@ async function main() {
       signalNext()
     })
 
-  const presenceObserver = ditto.presence.observe((graph) => {
+  presence = ditto.presence.observe((graph) => {
     if (graph.remotePeers.length != 0) {
       graph.remotePeers.forEach((peer) => {
         Logger.info(`peer connection: ${peer.deviceName}, ${peer.connections[0].connectionType}`)
